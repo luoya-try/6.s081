@@ -277,6 +277,7 @@ fork(void)
 
   np->parent = p;
 
+  np->mask = p->mask;
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
 
@@ -692,4 +693,13 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+//Get the num of processes that are not in UNUSED state
+int 
+not_UNUSED_process_num(void){
+  int count = 0;
+  for(int i = 0; i < NPROC; i ++)
+    count += (proc[i].state != UNUSED);
+  return count;
 }
