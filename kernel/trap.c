@@ -78,7 +78,23 @@ usertrap(void)
 
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2)
+  {
+    p->ticks_count ++;
+    if (p->alarmInterval != -1 && p->ticks_count >= p->alarmInterval && p->calling != 1)
+    {
+      // if a handler hasn't returned yet, the kernel shouldn't call it again
+      p->calling = 1;
+      //"re-arm" the alarm counter after each time it goes off
+      p->ticks_count = 0;
+      //save and restore registers
+      memmove(p->trapframe_back, p->trapframe, sizeof(struct trapframe));
+      //Q:When a trap on the RISC-V returns to user space,
+      //what determines the instruction address at which user-space code resumes execution?
+      //A: epc!
+      p->trapframe->epc = p->alarmHandler;
+    }
     yield();
+  }
 
   usertrapret();
 }
