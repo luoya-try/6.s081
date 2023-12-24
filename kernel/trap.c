@@ -65,6 +65,27 @@ usertrap(void)
     intr_on();
 
     syscall();
+  } else if (r_scause() == 13 || r_scause() == 15){
+    // check whether a fault is a page fault
+
+    // stval register contains the virtual address that caused the page fault
+    uint64 va = r_stval();
+
+    if (va >= PGROUNDUP(p->trapframe->sp) && va < p->sz){
+      char *mem = kalloc();
+      if(mem == 0){
+        p->killed = 1;
+      } else {
+        memset(mem, 0, PGSIZE);
+        if(mappages(p->pagetable, PGROUNDDOWN(va), PGSIZE, (uint64)mem, PTE_W|PTE_X|PTE_R|PTE_U) != 0){
+          kfree(mem);
+          p->killed = 1;
+        }
+      }
+    } else {
+      // out of range
+      p->killed = 1;
+    }
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {
