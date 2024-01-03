@@ -1,0 +1,18 @@
+2个线程同时要向hash table中添加时，链表的不变式被破坏。
+以下这个过程被打断：
+static void 
+insert(int key, int value, struct entry **p, struct entry *n)
+{
+  struct entry *e = malloc(sizeof(struct entry));
+  e->key = key;
+  e->value = value;
+  e->next = n;
+  *p = e;
+}
+以上为头插法，若线程执行顺序为：
+1. 线程A: e->next = n
+2. 线程B: e->next = n
+3. 线程A: *p = e
+4. 线程B: *p = e
+在2执行后，hash table不是单链表，链表头被2个entry指着；在4执行后，新链表头为线程B插入的新entry，而线程A插入的就丢失了。
+

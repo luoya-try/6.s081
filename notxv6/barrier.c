@@ -31,6 +31,21 @@ barrier()
   // then increment bstate.round.
   //
   
+  pthread_mutex_lock(&bstate.barrier_mutex);
+  // 每次调用barrier都增加nthread
+  bstate.nthread ++;
+  if (bstate.nthread != nthread)
+  {
+    pthread_cond_wait(&bstate.barrier_cond, &bstate.barrier_mutex);
+  }
+  else
+  {
+    // 如果是最后1个调用的，则将nthread置0，然后进行广播，唤醒其他wait的线程
+    pthread_cond_broadcast(&bstate.barrier_cond);
+    bstate.nthread = 0;
+    bstate.round += 1;
+  }
+  pthread_mutex_unlock(&bstate.barrier_mutex);
 }
 
 static void *
